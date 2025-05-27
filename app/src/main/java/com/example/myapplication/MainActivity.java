@@ -18,10 +18,11 @@ import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
-
+import androidx.appcompat.widget.SearchView;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -32,67 +33,126 @@ public class MainActivity extends AppCompatActivity {
     private List<NhaHang> nhaHangList;
     private List<NhaHang> fullNhaHangList; // Lưu danh sách đầy đủ
     private NhaHangAdapter adapter;
-    private EditText editSearch;
+//    private EditText editSearch;
+    private SearchView searchView;
     private int selectedPosition = -1;
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        EdgeToEdge.enable(this);
-        setContentView(R.layout.activity_main);
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
-            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
-            return insets;
-        });
+//    @Override
+//    protected void onCreate(Bundle savedInstanceState) {
+//        super.onCreate(savedInstanceState);
+//        EdgeToEdge.enable(this);
+//        setContentView(R.layout.activity_main);
+//        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
+//            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+//            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
+//            return insets;
+//        });
+//
+//        dbHelper = new DatabaseHelper(this);
+//        listView = findViewById(R.id.listView);
+//        editSearch = findViewById(R.id.editSearch);
+//        loadNhaHangData();
+//
+//        // Thêm sự kiện TextWatcher cho EditText
+//        editSearch.addTextChangedListener(new TextWatcher() {
+//            @Override
+//            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+//            }
+//
+//            @Override
+//            public void onTextChanged(CharSequence s, int start, int before, int count) {
+//            }
+//
+//            @Override
+//            public void afterTextChanged(Editable s) {
+//                filterByScore(s.toString());
+//            }
+//        });
+//
+//        registerForContextMenu(listView);
+//        listView.setOnItemLongClickListener((parent, view, position, id) -> {
+//            selectedPosition = position;
+//
+//            // Lấy thông tin nhà hàng được chọn
+//            NhaHang selectedNhaHang = nhaHangList.get(position);
+//            float selectedScore = selectedNhaHang.getDiemTrungBinh();
+//
+//            // Đếm số nhà hàng có điểm cao hơn
+//            int count = 0;
+//            for (NhaHang nh : fullNhaHangList) {
+//                if (nh.getDiemTrungBinh() > selectedScore) {
+//                    count++;
+//                }
+//            }
+//
+//            // Hiển thị thông báo Toast
+//            Toast.makeText(MainActivity.this,
+//                    "Có " + count + " nhà hàng có điểm cao hơn " + selectedScore,
+//                    Toast.LENGTH_LONG).show();
+//
+//            return false; // Vẫn hiển thị context menu
+//        }); // Show a toast to confirm the app is running
+//        Toast.makeText(this, "Đã tải danh sách nhà hàng", Toast.LENGTH_SHORT).show();
+//    }
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    EdgeToEdge.enable(this);
+    setContentView(R.layout.activity_main);
 
-        dbHelper = new DatabaseHelper(this);
-        listView = findViewById(R.id.listView);
-        editSearch = findViewById(R.id.editSearch);
-        loadNhaHangData();
+    ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
+        Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+        v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
+        return insets;
+    });
 
-        // Thêm sự kiện TextWatcher cho EditText
-        editSearch.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+    // Toolbar
+    Toolbar toolbar = findViewById(R.id.toolbar);
+    setSupportActionBar(toolbar); // Gán Toolbar thành ActionBar chính
+
+    dbHelper = new DatabaseHelper(this);
+    listView = findViewById(R.id.listView);
+    searchView = findViewById(R.id.searchView);
+
+    loadNhaHangData();
+
+    // Xử lý tìm kiếm bằng SearchView
+    searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+        @Override
+        public boolean onQueryTextSubmit(String query) {
+            filterByScore(query);
+            return true;
+        }
+
+        @Override
+        public boolean onQueryTextChange(String newText) {
+            filterByScore(newText);
+            return true;
+        }
+    });
+
+    registerForContextMenu(listView);
+    listView.setOnItemLongClickListener((parent, view, position, id) -> {
+        selectedPosition = position;
+        NhaHang selectedNhaHang = nhaHangList.get(position);
+        float selectedScore = selectedNhaHang.getDiemTrungBinh();
+
+        int count = 0;
+        for (NhaHang nh : fullNhaHangList) {
+            if (nh.getDiemTrungBinh() > selectedScore) {
+                count++;
             }
+        }
 
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-            }
+        Toast.makeText(MainActivity.this,
+                "Có " + count + " nhà hàng có điểm cao hơn " + selectedScore,
+                Toast.LENGTH_LONG).show();
 
-            @Override
-            public void afterTextChanged(Editable s) {
-                filterByScore(s.toString());
-            }
-        });
+        return false;
+    });
 
-        registerForContextMenu(listView);
-        listView.setOnItemLongClickListener((parent, view, position, id) -> {
-            selectedPosition = position;
-
-            // Lấy thông tin nhà hàng được chọn
-            NhaHang selectedNhaHang = nhaHangList.get(position);
-            float selectedScore = selectedNhaHang.getDiemTrungBinh();
-
-            // Đếm số nhà hàng có điểm cao hơn
-            int count = 0;
-            for (NhaHang nh : fullNhaHangList) {
-                if (nh.getDiemTrungBinh() > selectedScore) {
-                    count++;
-                }
-            }
-
-            // Hiển thị thông báo Toast
-            Toast.makeText(MainActivity.this,
-                    "Có " + count + " nhà hàng có điểm cao hơn " + selectedScore,
-                    Toast.LENGTH_LONG).show();
-
-            return false; // Vẫn hiển thị context menu
-        });  // Show a toast to confirm the app is running
-        Toast.makeText(this, "Đã tải danh sách nhà hàng", Toast.LENGTH_SHORT).show();
-    }
-
+    Toast.makeText(this, "Đã tải danh sách nhà hàng", Toast.LENGTH_SHORT).show();
+}
     private void loadNhaHangData() {
         fullNhaHangList = DatabaseUtils.getAllNhaHang(dbHelper);
         nhaHangList = new ArrayList<>(fullNhaHangList); // Tạo bản sao
